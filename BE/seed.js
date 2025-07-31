@@ -1,6 +1,9 @@
 const db = require('./database');
+const bcrypt = require('bcryptjs');
 
-// Seed data
+// Function to run the seed script
+function run() {
+  // Seed data
 const modules = [
   { name: 'Users' },
   { name: 'Groups' },
@@ -50,30 +53,49 @@ const users = [
   { username: 'viewer', password: 'password' },
 ];
 
+// Function to seed users with hashed passwords
+function seedUsers() {
+  const stmt = db.prepare('INSERT OR REPLACE INTO users (username, password) VALUES (?, ?)');
+  
+  users.forEach(user => {
+    const hashedPassword = bcrypt.hashSync(user.password, 10);
+    stmt.run(user.username, hashedPassword);
+  });
+  
+  stmt.finalize();
+  console.log('Users seeded successfully');
+}
+
+// Function to seed roles
+function seedRoles() {
+  const stmt = db.prepare('INSERT OR IGNORE INTO roles (name) VALUES (?)');
+  
+  roles.forEach(role => {
+    stmt.run(role.name);
+  });
+  
+  stmt.finalize();
+  console.log('Roles seeded successfully');
+}
+
 // Seed the database
 console.log('Starting database seeding...'); // DEBUG LOG
 db.serialize(() => {
   // Insert modules
   console.log('Inserting modules...'); // DEBUG LOG
-  const moduleStmt = db.prepare('INSERT INTO modules (name) VALUES (?)');
+  const moduleStmt = db.prepare('INSERT OR IGNORE INTO modules (name) VALUES (?)');
   modules.forEach(module => {
     moduleStmt.run(module.name);
   });
   moduleStmt.finalize();
   console.log('Modules inserted.'); // DEBUG LOG
 
-  // Insert roles
-  console.log('Inserting roles...'); // DEBUG LOG
-  const roleStmt = db.prepare('INSERT INTO roles (name) VALUES (?)');
-  roles.forEach(role => {
-    roleStmt.run(role.name);
-  });
-  roleStmt.finalize();
-  console.log('Roles inserted.'); // DEBUG LOG
+  // Seed roles
+  seedRoles();
 
   // Insert permissions
   console.log('Inserting permissions...'); // DEBUG LOG
-  const permissionStmt = db.prepare('INSERT INTO permissions (action, moduleId) VALUES (?, ?)');
+  const permissionStmt = db.prepare('INSERT OR IGNORE INTO permissions (action, moduleId) VALUES (?, ?)');
   permissions.forEach(permission => {
     permissionStmt.run(permission.action, permission.moduleId);
   });
@@ -82,26 +104,19 @@ db.serialize(() => {
 
   // Insert groups
   console.log('Inserting groups...'); // DEBUG LOG
-  const groupStmt = db.prepare('INSERT INTO groups (name) VALUES (?)');
+  const groupStmt = db.prepare('INSERT OR IGNORE INTO groups (name) VALUES (?)');
   groups.forEach(group => {
     groupStmt.run(group.name);
   });
   groupStmt.finalize();
   console.log('Groups inserted.'); // DEBUG LOG
 
-  // Insert users
-  console.log('Inserting users...'); // DEBUG LOG
-  const userStmt = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)');
-  users.forEach(user => {
-    const hashedPassword = require('bcryptjs').hashSync(user.password, 10);
-    userStmt.run(user.username, hashedPassword);
-  });
-  userStmt.finalize();
-  console.log('Users inserted.'); // DEBUG LOG
+  // Seed users
+  seedUsers();
 
   // Assign roles to groups
   console.log('Assigning roles to groups...'); // DEBUG LOG
-  const groupRoleStmt = db.prepare('INSERT INTO group_roles (groupId, roleId) VALUES (?, ?)');
+  const groupRoleStmt = db.prepare('INSERT OR REPLACE INTO group_roles (groupId, roleId) VALUES (?, ?)');
   // Admin role to Administrators group
   groupRoleStmt.run(1, 1);
   // Editor role to Editors group
@@ -113,7 +128,7 @@ db.serialize(() => {
 
   // Assign permissions to roles
   console.log('Assigning permissions to roles...'); // DEBUG LOG
-  const rolePermissionStmt = db.prepare('INSERT INTO role_permissions (roleId, permissionId) VALUES (?, ?)');
+  const rolePermissionStmt = db.prepare('INSERT OR REPLACE INTO role_permissions (roleId, permissionId) VALUES (?, ?)');
   // Admin role gets all permissions
   for (let i = 1; i <= 20; i++) {
     rolePermissionStmt.run(1, i);
@@ -131,7 +146,7 @@ db.serialize(() => {
 
   // Assign users to groups
   console.log('Assigning users to groups...'); // DEBUG LOG
-  const groupUserStmt = db.prepare('INSERT INTO group_users (groupId, userId) VALUES (?, ?)');
+  const groupUserStmt = db.prepare('INSERT OR REPLACE INTO group_users (groupId, userId) VALUES (?, ?)');
   // Admin user to Administrators group
   groupUserStmt.run(1, 1);
   // Editor user to Editors group
@@ -143,3 +158,6 @@ db.serialize(() => {
 
   console.log('Database seeded successfully.');
 });
+}
+
+module.exports = { run };

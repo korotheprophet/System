@@ -1,41 +1,41 @@
 const sqlite3 = require('sqlite3').verbose();
 
-// Use in-memory database for simplicity
-const db = new sqlite3.Database(':memory:', (err) => {
+// Use file-based database instead of in-memory
+const db = new sqlite3.Database('./iam.db', (err) => {
   if (err) {
     return console.error(err.message);
   }
-  console.log('Connected to the in-memory SQLite database.');
+  console.log('Connected to the SQLite database.');
 });
 
 db.serialize(() => {
   // Users table
-  db.run(`CREATE TABLE users (
+  db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password TEXT
   )`);
 
   // Groups table
-  db.run(`CREATE TABLE groups (
+  db.run(`CREATE TABLE IF NOT EXISTS groups (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE
   )`);
 
   // Roles table
-  db.run(`CREATE TABLE roles (
+  db.run(`CREATE TABLE IF NOT EXISTS roles (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE
   )`);
 
   // Modules table
-  db.run(`CREATE TABLE modules (
+  db.run(`CREATE TABLE IF NOT EXISTS modules (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE
   )`);
 
   // Permissions table
-  db.run(`CREATE TABLE permissions (
+  db.run(`CREATE TABLE IF NOT EXISTS permissions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     action TEXT NOT NULL,
     moduleId INTEGER,
@@ -44,7 +44,7 @@ db.serialize(() => {
   )`);
 
   // Join table for users and groups
-  db.run(`CREATE TABLE group_users (
+  db.run(`CREATE TABLE IF NOT EXISTS group_users (
     groupId INTEGER,
     userId INTEGER,
     PRIMARY KEY (groupId, userId),
@@ -53,7 +53,7 @@ db.serialize(() => {
   )`);
 
   // Join table for groups and roles
-  db.run(`CREATE TABLE group_roles (
+  db.run(`CREATE TABLE IF NOT EXISTS group_roles (
     groupId INTEGER,
     roleId INTEGER,
     PRIMARY KEY (groupId, roleId),
@@ -62,7 +62,7 @@ db.serialize(() => {
   )`);
 
   // Join table for roles and permissions
-  db.run(`CREATE TABLE role_permissions (
+  db.run(`CREATE TABLE IF NOT EXISTS role_permissions (
     roleId INTEGER,
     permissionId INTEGER,
     PRIMARY KEY (roleId, permissionId),

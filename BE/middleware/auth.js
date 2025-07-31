@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = 'your_jwt_secret'; // Should be the same as in auth.js
+
+// Define JWT_SECRET - should match the one in routes/auth.js
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -9,6 +11,7 @@ const authenticateJWT = (req, res, next) => {
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
       if (err) {
+        console.log('JWT verification error:', err.message); // DEBUG LOG
         return res.sendStatus(403); // Forbidden
       }
       req.user = user;

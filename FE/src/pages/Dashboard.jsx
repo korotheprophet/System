@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { logout } from '../features/auth/authSlice';
 import api from '../api/axios';
 
 const Dashboard = () => {
+  const dispatch = useDispatch();
   const [permissions, setPermissions] = useState([]);
   const [modules, setModules] = useState([]);
   const [selectedModule, setSelectedModule] = useState('');
@@ -57,7 +59,15 @@ const Dashboard = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <button
+          onClick={() => dispatch(logout())}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        >
+          Sign Out
+        </button>
+      </div>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       {user && <p className="mb-4">Welcome, <strong>{user.username}</strong>!</p>}
 

@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const db = require('../database');
 
 const router = express.Router();
-const JWT_SECRET = 'your_jwt_secret'; // Replace with a strong secret in a real app
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-for-development';
 
 // POST /register
 router.post('/register', (req, res) => {
@@ -49,6 +49,9 @@ router.post('/login', (req, res) => {
 
     const isPasswordValid = bcrypt.compareSync(password, user.password);
     console.log('Password valid?', isPasswordValid); // DEBUG LOG
+    console.log('Plain password:', password); // DEBUG LOG
+    console.log('Hashed password from DB:', user.password); // DEBUG LOG
+    
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }

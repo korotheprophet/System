@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const db = require('./database.js'); // Import the database connection
@@ -18,46 +19,30 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Initialize database with seed data
+db.serialize(() => {
+  const seedScript = require('./seed.js');
+  seedScript.run(); // Call the run function to execute seeding
+  console.log('Database initialized with seed data');
+});
+
 // A simple route to test the server
 app.get('/', (req, res) => {
   res.send('IAM System Backend is running!');
 });
 
-// Auth routes
-app.use('/', authRoutes);
+// Auth routes (no authentication required)
+app.use('/api', authRoutes);
 
 // Protected routes
-app.use('/me', meRoutes);
+app.use('/api/me', authenticateJWT, meRoutes);
 
-// Modules routes
-app.get('/modules', authenticateJWT, checkPermission('Modules', 'read'), moduleRoutes);
-app.post('/modules', authenticateJWT, checkPermission('Modules', 'create'), moduleRoutes);
-app.put('/modules/:id', authenticateJWT, checkPermission('Modules', 'update'), moduleRoutes);
-app.delete('/modules/:id', authenticateJWT, checkPermission('Modules', 'delete'), moduleRoutes);
-
-// Permissions routes
-app.get('/permissions', authenticateJWT, checkPermission('Permissions', 'read'), permissionRoutes);
-app.post('/permissions', authenticateJWT, checkPermission('Permissions', 'create'), permissionRoutes);
-app.put('/permissions/:id', authenticateJWT, checkPermission('Permissions', 'update'), permissionRoutes);
-app.delete('/permissions/:id', authenticateJWT, checkPermission('Permissions', 'delete'), permissionRoutes);
-
-// Roles routes
-app.get('/roles', authenticateJWT, checkPermission('Roles', 'read'), roleRoutes);
-app.post('/roles', authenticateJWT, checkPermission('Roles', 'create'), roleRoutes);
-app.put('/roles/:id', authenticateJWT, checkPermission('Roles', 'update'), roleRoutes);
-app.delete('/roles/:id', authenticateJWT, checkPermission('Roles', 'delete'), roleRoutes);
-
-// Groups routes
-app.get('/groups', authenticateJWT, checkPermission('Groups', 'read'), groupRoutes);
-app.post('/groups', authenticateJWT, checkPermission('Groups', 'create'), groupRoutes);
-app.put('/groups/:id', authenticateJWT, checkPermission('Groups', 'update'), groupRoutes);
-app.delete('/groups/:id', authenticateJWT, checkPermission('Groups', 'delete'), groupRoutes);
-
-// Users routes
-app.get('/users', authenticateJWT, checkPermission('Users', 'read'), userRoutes);
-app.post('/users', authenticateJWT, checkPermission('Users', 'create'), userRoutes);
-app.put('/users/:id', authenticateJWT, checkPermission('Users', 'update'), userRoutes);
-app.delete('/users/:id', authenticateJWT, checkPermission('Users', 'delete'), userRoutes);
+// API routes with authentication and permissions
+app.use('/api/modules', authenticateJWT, checkPermission('Modules', 'read'), moduleRoutes);
+app.use('/api/permissions', authenticateJWT, checkPermission('Permissions', 'read'), permissionRoutes);
+app.use('/api/roles', authenticateJWT, checkPermission('Roles', 'read'), roleRoutes);
+app.use('/api/groups', authenticateJWT, checkPermission('Groups', 'read'), groupRoutes);
+app.use('/api/users', authenticateJWT, checkPermission('Users', 'read'), userRoutes);
 
 // Start the server
 app.listen(port, () => {
